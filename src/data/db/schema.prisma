@@ -1,0 +1,16 @@
+// Database configuration
+datasource db {
+  provider = "sqlite"
+  url      = "file:../../../learnicity.db"
+}
+
+// Python client generator configuration
+generator client {
+  provider             = "prisma-client-py"
+  recursive_type_depth = 5
+}
+
+// User model definition
+model User {
+  id String @id @default(uuid()) // Unique identifier for each user
+}
