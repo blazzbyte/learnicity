@@ -9,7 +9,8 @@ readme = "README.md"
 python = "^3.11"
 streamlit = "^1.40.1"
 prisma = "^0.15.0"
-
+colorama = "^0.4.6"
+python-dotenv = "^1.0.1"
 
 [build-system]
 requires = ["poetry-core"]
