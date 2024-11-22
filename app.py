@@ -1,5 +1,16 @@
 import streamlit as st
+import asyncio
 from src.core.config import logger
+from src.data.db import db
+
+async def init_db():
+    """Initialize database connection"""
+    try:
+        await db.connect()
+        logger.info("Database connected successfully")
+    except Exception as e:
+        logger.error(f"Error connecting to database: {str(e)}")
+        st.error("Failed to connect to database")
 
 def main():
     # Set page config
@@ -44,4 +55,5 @@ def main():
 
 if __name__ == "__main__":
     logger.info("Iniciando aplicación Learnicity")
+    asyncio.run(init_db())
     main()

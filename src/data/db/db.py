@@ -26,6 +26,3 @@ class Database:
     def prisma(self):
         """Get the Prisma client instance"""
         return self._db
-
-# Export a single instance
-db = Database()
