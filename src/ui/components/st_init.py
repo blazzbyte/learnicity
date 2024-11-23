@@ -2,9 +2,22 @@ import streamlit as st
 import asyncio
 
 from src.core.config import logger
-from src.data.db import init_db
+from src.data.services.user_service import UserService
+
+def init_data():
+    if 'event_loop' not in st.session_state:
+        st.session_state.event_loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(st.session_state.event_loop)
+
+    # Use event loop from streamlit
+    loop = st.session_state.event_loop
+
+    # Load user
+    user_service = UserService()
+    loop.run_until_complete(user_service.load_from_storage())
 
 def st_init():
+    """Initialize Streamlit configuration and resources"""
     # Set page config
     st.set_page_config(
         page_title="Learnicity",
@@ -13,33 +26,12 @@ def st_init():
         initial_sidebar_state="expanded"
     )
 
-    # Initialize database
-    if 'db_initialized' not in st.session_state:
-        asyncio.run(init_db())
-        st.session_state.db_initialized = True
+    st.cache_resource(init_data())
 
     # Styles
     st.markdown(
         """<style>.eczjsme4 {
             padding: 4rem 1rem;
-            }
-            .css-w770g5{
-            width: 100%;}
-            .css-b3z5c9{
-            width: 100%;}
-            .stButton>button{
-            width: 100%;}
-            .stDownloadButton>button{
-            width: 100%;}
-            button[data-testid="baseButton-primary"]{
-            border-color: #505050;
-            background-color: #1E1E1E;
-            }
-            button[data-testid="baseButton-primary"]:hover {
-            border-color: #FC625F;
-            background-color: #1E1E1E;
-            color: #FC625F;
-            }
-            </style>""",
-        unsafe_allow_html=True
+        }</style>""",
+        unsafe_allow_html=True,
     )

@@ -1,4 +1,5 @@
 from prisma import Prisma
+from src.core.config import logger
 
 # Database connection singleton
 class Database:
@@ -12,6 +13,16 @@ class Database:
             cls._instance = super(Database, cls).__new__(cls)
             cls._db = Prisma()
         return cls._instance
+
+    async def init_db(self):
+        """Initialize database connection"""
+        if not self._is_connected:
+            try:
+                await self.connect()
+                logger.info("Database connected successfully")
+            except Exception as e:
+                logger.error(f"Error connecting to database: {str(e)}")
+                raise
 
     async def connect(self):
         """Establish connection to the database if not already connected"""
