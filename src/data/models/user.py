@@ -1,10 +1,12 @@
-from dataclasses import dataclass
-from uuid import UUID, uuid4
+import uuid
+from sqlalchemy import Column, String
+from src.data.db.database import Base
 
-@dataclass
-class User:
+class User(Base):
     """User model with unique identifier"""
-    id: UUID = uuid4()
+    __tablename__ = "users"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
 
     def to_dict(self) -> dict:
         """Converts the user instance to a dictionary format
@@ -13,7 +15,7 @@ class User:
             dict: Dictionary representation of the user
         """
         return {
-            "id": str(self.id)
+            "id": self.id
         }
     
     @classmethod
@@ -26,6 +28,4 @@ class User:
         Returns:
             User: New User instance
         """
-        return cls(
-            id=UUID(data["id"]) if isinstance(data["id"], str) else data["id"]
-        )
+        return cls(id=data.get("id"))

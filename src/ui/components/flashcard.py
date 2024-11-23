@@ -1,5 +1,4 @@
 import streamlit as st
-import os
 
 # Example flashcards data with images
 example_flashcards = [
@@ -33,11 +32,6 @@ example_flashcards = [
     }
 ]
 
-def load_css():
-    css_path = os.path.join(os.path.dirname(__file__), 'styles.css')
-    with open(css_path) as f:
-        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
-
 def render_card_content(text, image_url=None):
     content = f'<div class="content">'
     if text:
@@ -48,7 +42,6 @@ def render_card_content(text, image_url=None):
     return content
 
 def render_flashcards():
-    load_css()
     
     if 'current_card' not in st.session_state:
         st.session_state.current_card = 0

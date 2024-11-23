@@ -1,20 +1,24 @@
 import streamlit as st
-import asyncio
-
+import os
+from src.data.db import init_db
 from src.core.config import logger
-from src.data.services.user_service import UserService
 
-def init_data():
-    if 'event_loop' not in st.session_state:
-        st.session_state.event_loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(st.session_state.event_loop)
+def init_database():
+    """Initialize database if not already initialized"""
+    if 'db_initialized' not in st.session_state:
+        try:
+            init_db()
+            st.session_state['db_initialized'] = True
+            logger.info("Database initialized successfully")
+        except Exception as e:
+            logger.error(f"Failed to initialize database: {str(e)}")
+            st.error("Failed to initialize database. Please check the logs.")
 
-    # Use event loop from streamlit
-    loop = st.session_state.event_loop
-
-    # Load user
-    user_service = UserService()
-    loop.run_until_complete(user_service.load_from_storage())
+def load_css():
+    """Load custom CSS styles"""
+    css_path = os.path.join(os.path.dirname(__file__), 'styles.css')
+    with open(css_path) as f:
+        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 
 def st_init():
     """Initialize Streamlit configuration and resources"""
@@ -26,12 +30,8 @@ def st_init():
         initial_sidebar_state="expanded"
     )
 
-    st.cache_resource(init_data())
+    # Initialize database
+    init_database()
 
-    # Styles
-    st.markdown(
-        """<style>.eczjsme4 {
-            padding: 4rem 1rem;
-        }</style>""",
-        unsafe_allow_html=True,
-    )
+    # Load CSS styles
+    load_css()
