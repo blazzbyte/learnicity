@@ -10,12 +10,12 @@ from chromadb.config import Settings
 from dotenv import load_dotenv
 
 
-def create_chroma_instance(collection_name: str, user_id: str="test_user") -> Chroma:
+def create_chroma_instance(collection_name: str="test_user") -> Chroma:
 
 
     """Creates a Chroma vectorstore instance with default parameters."""
 
-    persist_directory = os.path.join(os.getcwd(), "src", "llm", "Temp", user_id)
+    persist_directory = os.path.join(os.getcwd(), "src", "llm", "Temp")
     Path(persist_directory).mkdir(parents=True, exist_ok=True)  # Ensure directory exists
 
     embeddings = JinaEmbeddings()  # Or any other embedding model
