@@ -1,55 +1,46 @@
 import os
-from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
-
-# Load environment variables from .env file
-load_dotenv()
-
+from src.core.config import config
 
 def get_openai_chat_model(model_name: str) -> ChatOpenAI:
     """
     Initializes and returns a ChatOpenAI language model.
 
-    This function reads the OpenAI API key and base URL from environment
-    variables. It's recommended to set these environment variables for
-    secure access to the OpenAI API.
+    This function gets the OpenAI API key and base URL from the application's
+    configuration. The configuration is managed through the core.config module.
 
-    Environment Variables:
-        OPENAI_API_KEY: Your OpenAI API key.
-        OPENAI_BASE_URL: (Optional) The base URL for the OpenAI API
-                         if you're using a proxy or custom endpoint.
-        OPENAI_ORG_ID: (Optional) Your OpenAI organization ID.
+    Args:
+        model_name (str): Name of the model to use (e.g., "llama3.1-8b")
 
     Returns:
         ChatOpenAI: An initialized ChatOpenAI object ready for use.
 
     Raises:
-        ValueError: If the OPENAI_API_KEY environment variable is not set.
+        ValueError: If the OpenAI credentials are not properly configured.
     """
-
-    api_key = os.getenv("OPENAI_API_KEY")
-    base_url = os.getenv("OPENAI_BASE_URL")
+    
+    # Get credentials from config
+    api_key, base_url = config.get_openai_credentials()
 
     if not api_key:
-        raise ValueError("The OPENAI_API_KEY environment variable must be set.")
+        raise ValueError("OpenAI API key is not configured in the application settings.")
 
     # Initialize ChatOpenAI with parameters
     llm = ChatOpenAI(
         name=model_name,
         model_name=model_name,
-        temperature=0.3,  # Example value
-        max_tokens=256,  # Example value
-        timeout=30,  # Example value
-        max_retries=3,  # Example value
+        temperature=0.3,
+        max_tokens=256,
+        timeout=config.get_inference_timeout(),
+        max_retries=3,
         openai_api_key=api_key,
-        base_url=base_url,
+        base_url=base_url if base_url else None,
     )
 
     return llm
 
 if __name__ == "__main__":
-# Example usage:
-    model_name = "llama3.1-8b"  # Replace with your actual model name
-    model = get_openai_chat_model(model_name)
-    response = model.invoke("Hello, how are you?")
+    # Example usage:
+    model = get_openai_chat_model("llama3.1-8b")
+    response = model.predict("Tell me about Llama models.")
     print(response)

@@ -10,14 +10,18 @@ class Config:
         load_dotenv()
         
         # STORAGE
-        self.logs_dir = os.getenv('LOGS_DIR', 'data/logs')
+        self.logs_dir = os.getenv('LOGS_DIR', 'src/data/logs')
         
         # API KEYS
         self.google_search_engine_id = os.getenv('GOOGLE_SEARCH_ENGINE_ID')
-        self.google_api_key = os.getenv('GOOGLE_API_KEY')
+        self.serpapi_api_key = os.getenv('SERPAPI_API_KEY')
+        self.openai_api_key = os.getenv('OPENAI_API_KEY')
+        self.tavily_api_key = os.getenv('TAVILY_API_KEY')
+        self.jina_api_key = os.getenv('JINA_API_KEY')
         
         # API ENDPOINTS
         self.google_search_api_endpoint = os.getenv('GOOGLE_SEARCH_API_ENDPOINT')
+        self.openai_base_url = os.getenv('OPENAI_BASE_URL')
         
         # TIMEOUT
         self.inference_timeout = int(os.getenv('INFERENCE', '30'))
@@ -26,9 +30,25 @@ class Config:
         """Get the logs directory path"""
         return self.logs_dir
     
-    def get_google_credentials(self) -> tuple[Optional[str], Optional[str]]:
+    def get_google_credentials(self) -> tuple[Optional[str]]:
         """Get Google Search API credentials"""
-        return self.google_search_engine_id, self.google_api_key
+        return (self.google_search_engine_id,)
+    
+    def get_serpapi_credentials(self) -> Optional[str]:
+        """Get SerpAPI API key"""
+        return self.serpapi_api_key
+    
+    def get_openai_credentials(self) -> tuple[Optional[str], Optional[str]]:
+        """Get OpenAI API credentials and base URL"""
+        return self.openai_api_key, self.openai_base_url
+    
+    def get_tavily_credentials(self) -> Optional[str]:
+        """Get Tavily API key"""
+        return self.tavily_api_key
+    
+    def get_jina_credentials(self) -> Optional[str]:
+        """Get Jina API key"""
+        return self.jina_api_key
     
     def get_google_endpoint(self) -> Optional[str]:
         """Get Google Search API endpoint"""

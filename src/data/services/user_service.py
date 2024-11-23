@@ -2,7 +2,8 @@ from typing import Optional
 import streamlit as st
 
 from src.data.models.user import User
-from src.data.db.database import get_db
+from src.data.db import get_db
+
 from src.core.config import logger
 
 
