@@ -2,13 +2,9 @@ from typing import List, Dict, Any, Optional
 
 from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
-from langchain_community.utilities import SerpAPIWrapper
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_core.documents import Document
+from langchain_community.utilities import SerpAPIWrapper
 from langchain_community.document_loaders import WebBaseLoader
-
-from langchain.chains.llm import LLMChain
-from langchain.chains.summarize import load_summarize_chain
 
 from src.core.config import config, logger
 from src.llm.providers.llama import get_openai_chat_model
@@ -25,7 +21,7 @@ class SearchChain:
     
     def setup_llm(self):
         """Initialize LLM with OpenAI configuration"""
-        self.llm = get_openai_chat_model("llama3.1-8b")
+        self.llm = get_openai_chat_model("Meta-Llama-3.1-8B-Instruct")
     
     def setup_search(self):
         """Initialize search wrapper with default parameters"""
@@ -61,7 +57,7 @@ class SearchChain:
                 data = get_json_from_text(result)
                 queries = data.get("queries", [])
                 if queries:
-                    logger.action(f"Successfully generated {len(queries)} queries on attempt {current_try + 1}")
+                    logger.parser(f"Successfully generated {len(queries)} queries on attempt {current_try + 1}")
                     return queries
                 else:
                     logger.warning(f"Generated empty queries list on attempt {current_try + 1}")
@@ -96,7 +92,7 @@ class SearchChain:
             logger.error(f"Error in image search for query '{query}': {str(e)}")
             return None
 
-    def searcher(self, query: str, query_type: str = "text") -> dict:
+    def search_and_fetch(self, query: str, query_type: str = "text") -> dict:
         """Perform search and fetch content from URLs"""
         try:
             if query_type == "image":
@@ -138,35 +134,6 @@ class SearchChain:
         except Exception as e:
             logger.error(f"Error in search for query '{query}': {str(e)}")
             return None
-
-    def process_queries(self, topic: str) -> List[dict]:
-        """Process multiple queries and aggregate results"""
-        queries = self.generate_search_queries(topic)
-        all_results = []
-        
-        for query_data in queries:
-            query = query_data.get("query", "")
-            query_type = query_data.get("type", "text")
-            
-            try:
-                result = self.searcher(query, query_type)
-                if result:
-                    content = result.get("content", "")
-                    if content and query_type == "text":
-                        summarized_content = self.summarize_content(content)
-                        result["content"] = summarized_content
-                    
-                    all_results.append({
-                        "query": query,
-                        "type": query_type,
-                        "result": result
-                    })
-                    logger.info(f"Successfully processed query: {query} ({query_type})")
-            except Exception as e:
-                logger.error(f"Error processing query '{query}': {str(e)}")
-                continue
-        
-        return all_results
 
     def summarize_content(self, content: str, token_usage: Optional[int]=None) -> str:
         """Summarize content using LLM with focus on key concepts for flashcard creation"""
@@ -224,82 +191,31 @@ class SearchChain:
             logger.error(f"Error summarizing content: {str(e)}")
             return content[:4000]  # Return truncated content as fallback
 
-    def create_flashcards(self, content: str) -> List[Dict[str, Any]]:
-        """Generate flashcards from the content"""
-        flashcard_template = """Create educational flashcards from the following content. Each flashcard should have:
-        1. A clear, specific question
-        2. A concise but complete answer
-        3. A relevant category
-        4. Optional image URLs for both question and answer (leave as null if not relevant)
-
-        Content: {content}
-
-        Generate the flashcards in this exact format:
-        [
-            {
-                "question": "Question text",
-                "answer": "Answer text",
-                "category": "Subject category",
-                "question_image": "URL or null",
-                "answer_image": "URL or null"
-            }
-        ]
-
-        Create 3-5 high-quality flashcards that test important concepts from the content."""
+    def process_queries(self, topic: str) -> List[dict]:
+        """Process multiple queries and aggregate results"""
+        queries = self.generate_search_queries(topic)
+        all_results = []
         
-        flashcard_prompt = PromptTemplate(template=flashcard_template, input_variables=["content"])
-        flashcard_chain = LLMChain(llm=self.llm, prompt=flashcard_prompt)
-        
-        # Split content if too long
-        text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=4000,
-            chunk_overlap=200
-        )
-        chunks = text_splitter.split_text(content)
-        
-        all_flashcards = []
-        for chunk in chunks:
+        for query_data in queries:
+            query = query_data.get("query", "")
+            query_type = query_data.get("type", "text")
+            
             try:
-                result = flashcard_chain.run(content=chunk)
-                # Parse the result and append flashcards
-                # Note: You might need to add proper JSON parsing here
-                flashcards = eval(result)  # Be careful with eval, consider using json.loads with proper error handling
-                all_flashcards.extend(flashcards)
+                result = self.search_and_fetch(query, query_type)
+                if result:
+                    content = result.get("content", "")
+                    if content and query_type == "text":
+                        summarized_content = self.summarize_content(content)
+                        result["content"] = summarized_content
+                    
+                    all_results.append({
+                        "query": query,
+                        "type": query_type,
+                        "result": result
+                    })
+                    logger.info(f"Successfully processed query: {query} ({query_type})")
             except Exception as e:
-                logger.error(f"Error creating flashcards: {str(e)}")
+                logger.error(f"Error processing query '{query}': {str(e)}")
                 continue
         
-        return all_flashcards
-    
-    def search_chain(self, query: str) -> List[Dict[str, Any]]:
-        """Main chain that coordinates the entire search and flashcard creation process"""
-        # Refine the original query
-        refined_query = self.refine_query(query)
-        
-        # Generate multiple search queries
-        search_queries = self.generate_search_queries(refined_query)
-        
-        # Collect content from all queries
-        all_content = []
-        for query in search_queries:
-            content = self.search_and_fetch(query)
-            all_content.extend(content)
-        
-        # Combine and summarize content if too long
-        combined_content = " ".join(all_content)
-        if len(combined_content) > 8000:
-            summarize_chain = load_summarize_chain(self.llm, chain_type="map_reduce")
-            docs = self.text_splitter.create_documents([combined_content])
-            combined_content = summarize_chain.run(docs)
-        
-        # Create flashcards from the processed content
-        flashcards = self.create_flashcards(combined_content)
-        
-        logger.info(f"Generated {len(flashcards)} flashcards")
-        return flashcards
-
-# For backwards compatibility
-def search_chain():
-    search = SearchChain()
-    return search.search_chain("General knowledge flashcards")
-    return example_flashcards
+        return all_results

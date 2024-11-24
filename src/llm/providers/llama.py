@@ -10,7 +10,7 @@ def get_openai_chat_model(model_name: str) -> ChatOpenAI:
     configuration. The configuration is managed through the core.config module.
 
     Args:
-        model_name (str): Name of the model to use (e.g., "llama3.1-8b")
+        model_name (str): Name of the model to use (e.g., "Meta-Llama-3.1-8B-Instruct")
 
     Returns:
         ChatOpenAI: An initialized ChatOpenAI object ready for use.
@@ -30,7 +30,7 @@ def get_openai_chat_model(model_name: str) -> ChatOpenAI:
         name=model_name,
         model_name=model_name,
         temperature=0.3,
-        max_tokens=256,
+        max_tokens=1024,
         timeout=config.get_inference_timeout(),
         max_retries=3,
         openai_api_key=api_key,
@@ -41,6 +41,6 @@ def get_openai_chat_model(model_name: str) -> ChatOpenAI:
 
 if __name__ == "__main__":
     # Example usage:
-    model = get_openai_chat_model("llama3.1-8b")
+    model = get_openai_chat_model("Meta-Llama-3.1-8B-Instruct")
     response = model.predict("Tell me about Llama models.")
     print(response)

@@ -6,8 +6,8 @@ def sidebar():
         st.header("Settings")
 
         # # First input field for the model name
-        # model_name = st.text_input("Model Name", "llama3.1-8b", help=("Enter the model name. "
-        #                                                               "For example: llama3.1-8b, llama3.1-70b, "
+        # model_name = st.text_input("Model Name", "Meta-Llama-3.1-8B-Instruct", help=("Enter the model name. "
+        #                                                               "For example: Meta-Llama-3.1-8B-Instruct, llama3.1-70b, "
         #                                                               "llama-3.2-11b-vision-preview, llama-3.2-90b-vision-preview"))
         # st.selectbox()
         # # Check if the 'OPENAI_BASE_URL' is set in either st.secrets or environment variables
