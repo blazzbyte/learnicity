@@ -65,7 +65,7 @@ def main():
         query = st.session_state.get("input_text")
         search_chain = SearchChain()
         results =search_chain.process_queries(query)
-        logger.info(f"Results: {results}")
+        logger.parser(f"Results: {results}")
         render_flashcards(example_flashcards)
 
     # # Add a button

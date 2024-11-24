@@ -1,20 +1,19 @@
 from typing import List, Dict, Any, Optional
-from src.core.config import config, logger
-from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
-from langchain_core.output_parsers import StrOutputParser, JsonOutputParser
 
+from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+from langchain_community.utilities import SerpAPIWrapper
 
 from langchain.chains import LLMChain
-from langchain_community.utilities import SerpAPIWrapper
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.chains.summarize import load_summarize_chain
-import requests
-# from bs4 import BeautifulSoup
+
+from src.core.config import config, logger
 from src.llm.providers.llama import get_openai_chat_model
 from src.llm.prompts.search_prompts import generate_queries_template
-import json
-
 from src.llm.parsers.json_parser import get_json_from_text
+from src.llm.services.jinareader import fetch_urls
+import json
 
 class SearchChain:
     def __init__(self):
@@ -32,7 +31,7 @@ class SearchChain:
             params={
                 "engine": "google",
                 "google_domain": "google.com",
-                "num": 1,
+                "num": 2,
                 "hl": "en"
             }
         )
@@ -60,7 +59,7 @@ class SearchChain:
                 data = get_json_from_text(result)
                 queries = data.get("queries", [])
                 if queries:
-                    logger.info(f"Successfully generated {len(queries)} queries on attempt {current_try + 1}")
+                    logger.action(f"Successfully generated {len(queries)} queries on attempt {current_try + 1}")
                     return queries
                 else:
                     logger.warning(f"Generated empty queries list on attempt {current_try + 1}")
@@ -95,7 +94,7 @@ class SearchChain:
             logger.error(f"Error in image search for query '{query}': {str(e)}")
             return None
 
-    def search_and_fetch(self, query: str, query_type: str = "text") -> dict:
+    def searcher(self, query: str, query_type: str = "text") -> dict:
         """Perform search and fetch content from URLs"""
         try:
             if query_type == "image":
@@ -120,28 +119,86 @@ class SearchChain:
             logger.error(f"Error in search for query '{query}': {str(e)}")
             return None
 
+    def fetch_contents(self, urls: List[str]) -> List[dict]:
+        """Fetch content from URLs using jinareader service"""
+        try:
+            contents = fetch_urls(urls)
+            if not contents:
+                logger.warning("No contents fetched from URLs")
+            return contents
+        except Exception as e:
+            logger.error(f"Error fetching contents: {str(e)}")
+            return []
+
+    def summarize_content(self, content: str, token_usage: int) -> str:
+        """Summarize content using LLM"""
+        try:
+            summarize_chain = load_summarize_chain(self.llm, chain_type="map_reduce")
+            docs = text_splitter.create_documents([content])
+            summary = summarize_chain.run(docs)
+            return summary
+        except Exception as e:
+            logger.error(f"Error summarizing content: {str(e)}")
+            return content
+
     def process_queries(self, topic: str) -> List[dict]:
         """Process multiple queries and aggregate results"""
         queries = self.generate_search_queries(topic)
         all_results = []
+        text_results_urls = []
+        text_results_map = {}
         
         for query_data in queries:
             query = query_data.get("query", "")
             query_type = query_data.get("type", "text")
             
             try:
-                result = self.search_and_fetch(query, query_type)
+                result = self.searcher(query, query_type)
                 if result:
-                    result_data = {
-                        "query": query,
-                        "type": query_type,
-                        "result": result
-                    }
-                    all_results.append(result_data)
+                    if query_type == "text":
+                        url = result["link"]
+                        text_results_urls.append(url)
+                        text_results_map[url] = {
+                            "query": query,
+                            "type": query_type,
+                            "result": result
+                        }
+                    else:
+                        all_results.append({
+                            "query": query,
+                            "type": query_type,
+                            "result": result
+                        })
                     logger.info(f"Successfully processed query: {query} ({query_type})")
             except Exception as e:
                 logger.error(f"Error processing query '{query}': {str(e)}")
                 continue
+        
+        # Fetch contents for text results
+        if text_results_urls:
+            contents = self.fetch_contents(text_results_urls)
+            for content_data in contents:
+                try:
+                    if isinstance(content_data.get('data'), str):
+                        jina_response = json.loads(content_data['data'])
+                    else:
+                        jina_response = content_data.get('data', {})
+                    
+                    if 'data' in jina_response:
+                        jina_data = jina_response['data']
+                        url = jina_data.get('url')
+                        if url in text_results_map:
+                            result_data = text_results_map[url]
+                            # Get the content and summarize it
+                            content = jina_data.get('content', '')
+                            token_usage = jina_data.get('usage', {}).get('tokens', 0)
+                            summarized_content = self.summarize_content(content, token_usage)
+                            result_data["result"]["content"] = summarized_content 
+                            all_results.append(result_data)
+                except json.JSONDecodeError as e:
+                    logger.error(f"Error parsing JSON response: {str(e)}")
+                except Exception as e:
+                    logger.error(f"Error processing content data: {str(e)}")
         
         return all_results
     
