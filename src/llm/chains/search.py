@@ -3,9 +3,10 @@ from typing import List, Dict, Any, Optional
 from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_community.utilities import SerpAPIWrapper
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_core.documents import Document
 
-from langchain.chains import LLMChain
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.chains.llm import LLMChain
 from langchain.chains.summarize import load_summarize_chain
 
 from src.core.config import config, logger
@@ -20,6 +21,8 @@ class SearchChain:
         self.setup_llm()
         self.setup_search()
         self.content_cache = {}
+        self.text_splitter = RecursiveCharacterTextSplitter(chunk_size=3000, chunk_overlap=200)
+
     
     def setup_llm(self):
         """Initialize LLM with OpenAI configuration"""
@@ -130,11 +133,15 @@ class SearchChain:
             logger.error(f"Error fetching contents: {str(e)}")
             return []
 
-    def summarize_content(self, content: str, token_usage: int) -> str:
+    def summarize_content(self, content: str, token_usage: Optional[int]=None) -> str:
+
         """Summarize content using LLM"""
         try:
             summarize_chain = load_summarize_chain(self.llm, chain_type="map_reduce")
-            docs = text_splitter.create_documents([content])
+            if token_usage is not None and token_usage <= 3500:
+                docs:List[Document] = [Document(page_content=content)]
+            else:
+                docs = self.text_splitter.create_documents([content])
             summary = summarize_chain.run(docs)
             return summary
         except Exception as e:
@@ -267,7 +274,7 @@ class SearchChain:
         combined_content = " ".join(all_content)
         if len(combined_content) > 8000:
             summarize_chain = load_summarize_chain(self.llm, chain_type="map_reduce")
-            docs = text_splitter.create_documents([combined_content])
+            docs = self.text_splitter.create_documents([combined_content])
             combined_content = summarize_chain.run(docs)
         
         # Create flashcards from the processed content
