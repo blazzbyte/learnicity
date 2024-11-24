@@ -1,6 +1,7 @@
 """Configuration class to manage environment variables"""
 
 import os
+import streamlit as st
 from typing import Optional
 from dotenv import load_dotenv
 
@@ -21,14 +22,14 @@ class Config:
         # API KEYS
         self.google_search_engine_id = os.getenv('GOOGLE_SEARCH_ENGINE_ID')
         self.serpapi_api_key = os.getenv('SERPAPI_API_KEY')
-        self.openai_api_key = os.getenv('OPENAI_API_KEY')
+        self.openai_api_key = st.session_state.get("api_key", os.getenv('OPENAI_API_KEY'))
         self.tavily_api_key = os.getenv('TAVILY_API_KEY')
         self.jina_api_key = os.getenv('JINA_API_KEY')
         
         # API ENDPOINTS
         self.google_search_api_endpoint = os.getenv('GOOGLE_SEARCH_API_ENDPOINT')
-        self.openai_base_url = os.getenv('OPENAI_BASE_URL')
-        
+        self.openai_base_url = st.session_state.get("base_url", os.getenv('OPENAI_BASE_URL'))
+
         # TIMEOUT
         self.inference_timeout = int(os.getenv('INFERENCE', '30'))
     
