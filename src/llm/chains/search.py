@@ -5,6 +5,7 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_community.utilities import SerpAPIWrapper
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
+from langchain_community.document_loaders import WebBaseLoader
 
 from langchain.chains.llm import LLMChain
 from langchain.chains.summarize import load_summarize_chain
@@ -13,8 +14,6 @@ from src.core.config import config, logger
 from src.llm.providers.llama import get_openai_chat_model
 from src.llm.prompts.search_prompts import generate_queries_template
 from src.llm.parsers.json_parser import get_json_from_text
-from src.llm.services.jinareader import fetch_urls
-import json
 
 class SearchChain:
     def __init__(self):
@@ -111,49 +110,39 @@ class SearchChain:
                 return None
                 
             first_result = organic_results[0]
-            return {
-                "title": first_result.get("title", ""),
-                "content": first_result.get("snippet", ""),
-                "link": first_result.get("link", ""),
-                "source": first_result.get("source", first_result.get("displayed_link", ""))
-            }
+            url = first_result.get("link", "")
+            
+            # Fetch content using WebBaseLoader
+            try:
+                loader = WebBaseLoader(url)
+                docs = loader.load()
+                # Combine all page content
+                content = "".join(doc.page_content for doc in docs)
+                
+                return {
+                    "title": first_result.get("title", ""),
+                    "content": content,
+                    "link": url,
+                    "source": first_result.get("source", first_result.get("displayed_link", ""))
+                }
+                
+            except Exception as e:
+                logger.error(f"Error fetching content from URL {url}: {str(e)}")
+                return {
+                    "title": first_result.get("title", ""),
+                    "content": first_result.get("snippet", ""),
+                    "link": url,
+                    "source": first_result.get("source", first_result.get("displayed_link", ""))
+                }
             
         except Exception as e:
             logger.error(f"Error in search for query '{query}': {str(e)}")
             return None
 
-    def fetch_contents(self, urls: List[str]) -> List[dict]:
-        """Fetch content from URLs using jinareader service"""
-        try:
-            contents = fetch_urls(urls)
-            if not contents:
-                logger.warning("No contents fetched from URLs")
-            return contents
-        except Exception as e:
-            logger.error(f"Error fetching contents: {str(e)}")
-            return []
-
-    def summarize_content(self, content: str, token_usage: Optional[int]=None) -> str:
-
-        """Summarize content using LLM"""
-        try:
-            summarize_chain = load_summarize_chain(self.llm, chain_type="map_reduce")
-            if token_usage is not None and token_usage <= 3500:
-                docs:List[Document] = [Document(page_content=content)]
-            else:
-                docs = self.text_splitter.create_documents([content])
-            summary = summarize_chain.run(docs)
-            return summary
-        except Exception as e:
-            logger.error(f"Error summarizing content: {str(e)}")
-            return content
-
     def process_queries(self, topic: str) -> List[dict]:
         """Process multiple queries and aggregate results"""
         queries = self.generate_search_queries(topic)
         all_results = []
-        text_results_urls = []
-        text_results_map = {}
         
         for query_data in queries:
             query = query_data.get("query", "")
@@ -162,53 +151,79 @@ class SearchChain:
             try:
                 result = self.searcher(query, query_type)
                 if result:
-                    if query_type == "text":
-                        url = result["link"]
-                        text_results_urls.append(url)
-                        text_results_map[url] = {
-                            "query": query,
-                            "type": query_type,
-                            "result": result
-                        }
-                    else:
-                        all_results.append({
-                            "query": query,
-                            "type": query_type,
-                            "result": result
-                        })
+                    content = result.get("content", "")
+                    if content and query_type == "text":
+                        summarized_content = self.summarize_content(content)
+                        result["content"] = summarized_content
+                    
+                    all_results.append({
+                        "query": query,
+                        "type": query_type,
+                        "result": result
+                    })
                     logger.info(f"Successfully processed query: {query} ({query_type})")
             except Exception as e:
                 logger.error(f"Error processing query '{query}': {str(e)}")
                 continue
         
-        # Fetch contents for text results
-        if text_results_urls:
-            contents = self.fetch_contents(text_results_urls)
-            for content_data in contents:
-                try:
-                    if isinstance(content_data.get('data'), str):
-                        jina_response = json.loads(content_data['data'])
-                    else:
-                        jina_response = content_data.get('data', {})
-                    
-                    if 'data' in jina_response:
-                        jina_data = jina_response['data']
-                        url = jina_data.get('url')
-                        if url in text_results_map:
-                            result_data = text_results_map[url]
-                            # Get the content and summarize it
-                            content = jina_data.get('content', '')
-                            token_usage = jina_data.get('usage', {}).get('tokens', 0)
-                            summarized_content = self.summarize_content(content, token_usage)
-                            result_data["result"]["content"] = summarized_content 
-                            all_results.append(result_data)
-                except json.JSONDecodeError as e:
-                    logger.error(f"Error parsing JSON response: {str(e)}")
-                except Exception as e:
-                    logger.error(f"Error processing content data: {str(e)}")
-        
         return all_results
-    
+
+    def summarize_content(self, content: str, token_usage: Optional[int]=None) -> str:
+        """Summarize content using LLM with focus on key concepts for flashcard creation"""
+        try:
+            # Define the reduce template for content summarization
+            reduce_template = """
+            Role: Educational Content Synthesizer
+            Goal: Create a comprehensive summary optimized for flashcard generation
+            
+            Instructions:
+            1. IGNORE all website metadata, navigation elements, and non-content related text
+            2. Focus ONLY on the main content of the article/document
+            3. Create a summary that preserves:
+               - Key terms and their precise definitions
+               - Core concepts and principles
+               - Important relationships between ideas
+               - Significant examples and applications
+               - Essential technical details
+               - Relevant numerical data
+            4. Structure the information to facilitate flashcard creation
+            5. Maintain academic accuracy and terminology
+            
+            Content to summarize:
+            {text}
+            
+            Educational summary (focus on key concepts):
+            """
+            
+            # Create the reduce prompt and chain
+            reduce_prompt = ChatPromptTemplate.from_template(reduce_template)
+            reduce_chain = reduce_prompt | self.llm | StrOutputParser()
+            
+            # Check content length and split if necessary
+            if len(content) > 4000:  # Conservative limit to account for prompt
+                docs = self.text_splitter.create_documents([content])
+                summaries = []
+                
+                # Process each chunk
+                for doc in docs:
+                    chunk_summary = reduce_chain.invoke({"text": doc.page_content})
+                    summaries.append(chunk_summary)
+                
+                # Combine summaries if multiple chunks were processed
+                if len(summaries) > 1:
+                    combined_summary = "\n\n".join(summaries)
+                    # Process combined summary if it's still too long
+                    if len(combined_summary) > 6000:
+                        return reduce_chain.invoke({"text": combined_summary[:6000]})
+                    return combined_summary
+                return summaries[0]
+            else:
+                return reduce_chain.invoke({"text": content})
+            
+        except Exception as e:
+            logger.error(f"Error summarizing content: {str(e)}")
+            return content[:4000]  # Return truncated content as fallback
+
     def create_flashcards(self, content: str) -> List[Dict[str, Any]]:
         """Generate flashcards from the content"""
         flashcard_template = """Create educational flashcards from the following content. Each flashcard should have:
