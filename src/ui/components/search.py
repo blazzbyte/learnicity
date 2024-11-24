@@ -12,7 +12,7 @@ def search():
             st.rerun()
 
     uploaded_files = st.file_uploader(
-        "Or upload your own file:", accept_multiple_files=True, type=["pdf", "docx", "txt"], key="file_uploader"
+        "Or upload your own file:", accept_multiple_files=False, type=["pdf", "docx", "txt", "md"], key="file_uploader", help="Load your own file to convert them into Flashcards. Supported formats: PDF, DOCX, TXT, MD"
     )
 
     if uploaded_files:
