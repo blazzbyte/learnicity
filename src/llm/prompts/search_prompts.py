@@ -16,22 +16,26 @@ generate_queries_template = """
 Role: Educational Content Researcher
 Goal: Generate diverse search queries to explore a topic thoroughly
 Instructions:
-1. Create {num_queries} different search queries about this topic
-2. Each query should focus on a different aspect or angle
-3. Make queries specific and academically oriented
-4. Focus on educational and factual content
-5. Ensure queries are suitable for scholarly search
+1. Generate {num_queries} search queries that follow a pedagogical progression:
+   - Start with fundamental definitions and basic concepts
+   - Progress to intermediate understanding and relationships
+   - End with advanced applications and deeper insights
+2. Each query should build upon the previous one
+3. Focus on creating a logical learning sequence
+4. Make queries accessible and educational
+5. Ensure queries are suitable for creating a comprehensive lesson
 6. Return the queries in the following JSON format:
-   {
+   {{
        "queries": [
-           "first query",
-           "second query",
-           "third query"
+           "What is [topic]?",
+           "How does [topic] work?",
+           "What are the main applications of [topic]?",
+           ...
        ]
-   }
+   }}
 
 Topic: {query}
-Generated Queries:"""
+{num_queries} Generated Queries:"""
 
 # Flashcard Creation Prompt
 flashcard_template = """

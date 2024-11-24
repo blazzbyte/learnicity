@@ -1,15 +1,18 @@
-from src.ui.components.flashcard import render_flashcards
-from src.llm.chains.search import search_chain
-import streamlit as st
-import uuid
 
+
+import streamlit as st
 from src.core.config import logger
+
+from src.llm.chains.search import SearchChain
 
 from src.ui.components.st_init import st_init
 from src.ui.components.st_states import init_session_states
+
 from src.ui.components.sidebar import sidebar
 from src.ui.components.header import header
+
 from src.ui.components.search import search
+from src.ui.components.flashcard import render_flashcards
 
 # Example flashcards data with images
 example_flashcards = [
@@ -60,7 +63,8 @@ def main():
         search()
     else:
         query = st.session_state.get("input_text")
-        flashcards = search_chain()
+        search_chain = SearchChain()
+        search_chain.generate_search_queries(query)
         render_flashcards(example_flashcards)
 
     # # Add a button
