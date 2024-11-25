@@ -24,7 +24,7 @@ class FlashcardChain():
 
     def setup_llm(self):
         """Initialize LLM with OpenAI configuration"""
-        self.llm = get_openai_chat_model("Meta-Llama-3.1-8B-Instruct")
+        self.llm = get_openai_chat_model("Meta-Llama-3.1-70B-Instruct")
         self.image_llm = get_openai_chat_model("Llama-3.2-11B-Vision-Instruct")
 
     def setup_chains(self):
@@ -91,6 +91,7 @@ class FlashcardChain():
 
     def create_image_flashcards(
         self,
+        initial_query: str,
         image_url: str,
         image_description: str,
         previous_flashcards: Optional[List[Dict[str, Any]]] = None
@@ -108,16 +109,15 @@ class FlashcardChain():
         """
         try:
             # Format previous flashcards for prompt
-            prev_cards_str = str(
-                previous_flashcards) if previous_flashcards else "[]"
+            # prev_cards_str = str(
+            #     previous_flashcards) if previous_flashcards else "[]"
 
             # Generate flashcards using the vision model
             result = self.image_chain.invoke({
-                "previous_flashcards": prev_cards_str,
+                "initial_query": initial_query,
                 "image_description": image_description,
                 "image_url": image_url
             })
-            print(result)
 
             # Parse the JSON response
             flashcards = parse_flashcards(result, is_image=True)
@@ -158,6 +158,7 @@ class FlashcardChain():
 
         try:
             for result in results:
+                initial_query = result.get("query")
                 query_type = result.get("type")
                 result_data = result.get("result", {})
 
@@ -180,6 +181,7 @@ class FlashcardChain():
                     image_url = result_data.get("link")
                     if image_url:
                         flashcards = self.create_image_flashcards(
+                            initial_query=initial_query,
                             image_url=image_url,
                             image_description=result_data.get("title", ""),
                             previous_flashcards=[]

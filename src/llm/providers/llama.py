@@ -2,7 +2,7 @@ import os
 from langchain_openai import ChatOpenAI
 from src.core.config import config
 
-def get_openai_chat_model(model_name: str) -> ChatOpenAI:
+def get_openai_chat_model(model_name: str, max_tokens : int = 1024) -> ChatOpenAI:
     """
     Initializes and returns a ChatOpenAI language model.
 
@@ -30,7 +30,7 @@ def get_openai_chat_model(model_name: str) -> ChatOpenAI:
         name=model_name,
         model_name=model_name,
         temperature=0.3,
-        max_tokens=1024,
+        max_tokens=max_tokens,
         timeout=config.get_inference_timeout(),
         max_retries=3,
         openai_api_key=api_key,

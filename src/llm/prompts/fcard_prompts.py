@@ -49,15 +49,13 @@ Content to Process:
 
 # Template for generating flashcards from image content
 image_flashcard_system_template = """Role: Visual Educational Content Analyzer
-Task: Create 1 educational flashcard from an image while considering previous cards.
+Task: Create 1 educational flashcard from an image.
 
 Instructions:
 1. First, analyze and understand the image thoroughly
 2. Consider the visual elements, text, diagrams, or charts present
 3. Create 1 NEW flashcard that:
-   - Don't duplicate concepts from previous flashcards
-   - Focus on visual elements and their significance
-   - Capture key relationships or processes shown
+   - Focus on visual elements
    - Link visual elements to educational concepts
 4. The flashcard must have:
    - A clear question based on visual elements
@@ -75,8 +73,8 @@ Output Example:
 {{
     "flashcards": [
         {{
-            "question": "What does the diagram show about X?",
-            "answer": "The diagram illustrates...",
+            "question": "A question based on what you can see in the image",
+            "answer": "Answer to the question",
             "source": "Image URL",
             "type": "image"
         }}
@@ -85,9 +83,7 @@ Output Example:
 """
 
 image_flashcard_human_template = """
-Context:
-Previous Flashcards: {previous_flashcards}
-Image Description: {image_description}
+Initial Query: {initial_query}
+Image Title: {image_description}
 Image URL: {image_url}
-Image:
 """

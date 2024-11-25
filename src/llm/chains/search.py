@@ -8,7 +8,7 @@ from langchain_community.document_loaders import WebBaseLoader
 
 from src.core.config import config, logger
 from src.llm.providers.llama import get_openai_chat_model
-from src.llm.prompts.search_prompts import generate_queries_template
+from src.llm.prompts.search_prompts import queries_system_template, queries_human_template
 from src.llm.parsers.json_parser import get_json_from_text
 
 class SearchChain:
@@ -17,8 +17,7 @@ class SearchChain:
         self.setup_search()
         self.content_cache = {}
         self.text_splitter = RecursiveCharacterTextSplitter(chunk_size=3000, chunk_overlap=200)
-
-    
+   
     def setup_llm(self):
         """Initialize LLM with OpenAI configuration"""
         self.llm = get_openai_chat_model("Meta-Llama-3.1-8B-Instruct")
@@ -45,7 +44,10 @@ class SearchChain:
     
     def generate_search_queries(self, query: str, num_queries: int = 3) -> List[str]:
         """Generate multiple search queries to cover different aspects of the topic"""
-        prompt = ChatPromptTemplate.from_template(generate_queries_template)
+        prompt = ChatPromptTemplate.from_messages([
+            ("system", queries_system_template),
+            ("human", queries_human_template)
+        ])
         chain = prompt | self.llm | StrOutputParser()
         
         max_retries = 2

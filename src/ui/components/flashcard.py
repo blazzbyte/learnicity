@@ -33,7 +33,7 @@ def render_flashcards(flashcards: List[Dict[str, Any]]):
             - type (str): Type of flashcard ("text" or "image")
     """
     if not flashcards:
-        st.warning("No hay tarjetas para mostrar.")
+        st.warning("No se pudo generar tarjetas para mostrar.")
         return
     
     if 'current_card' not in st.session_state:
@@ -55,6 +55,9 @@ def render_flashcards(flashcards: List[Dict[str, Any]]):
                         card['source'] if card_type == 'image' else None,
                         card_type
                     )}
+                    <div class="flashcard-source">
+                        <a href="{card['source']}" target="_blank">Fuente</a>
+                    </div>
                 </div>
                 <div class="flashcard-back">
                     {render_card_content(card['answer'])}
@@ -62,11 +65,9 @@ def render_flashcards(flashcards: List[Dict[str, Any]]):
             </div>
         </div>
     ''', unsafe_allow_html=True)
-
+    
     # Show progress and source
     st.markdown(f'<p style="text-align: center">Tarjeta {st.session_state.current_card + 1} de {len(flashcards)}</p>', unsafe_allow_html=True)
-    if card_type == 'text':
-        st.markdown(f'<p style="text-align: center; font-size: 0.8em;"><a href="{card["source"]}" target="_blank">Fuente</a></p>', unsafe_allow_html=True)
     
     # Navigation buttons below the card
     st.markdown('<div class="navigation-buttons">', unsafe_allow_html=True)

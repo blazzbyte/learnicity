@@ -1,5 +1,5 @@
 # Multiple Queries Generation Prompt
-generate_queries_template = """
+queries_system_template = """
 Role: Educational Content Researcher
 Goal: Generate diverse search queries to explore a topic thoroughly
 Instructions:
@@ -11,7 +11,7 @@ Instructions:
 3. Focus on creating a logical learning sequence
 4. Make queries accessible and educational
 5. Ensure queries are suitable for creating a comprehensive lesson
-6. Only use text or image types
+6. Only two types are allowed: "text" or "image"
 7. Return the queries in the following JSON format:
    {{
        "queries": [
@@ -21,36 +21,31 @@ Instructions:
            }},
            {{
                "query": "second query",
-               "type": "text"
-           }},
-           {{
-               "query": "third query",
                "type": "image"
            }},
            ...
        ]
    }}
 
-Example:
+Output Example:
    {{
        "queries": [
            {{
-               "query": "What is Vector Store?",
+               "query": "A query about X",
                "type": "text"
            }},
            {{
-               "query": "Fundamental concepts of Vector Store",
-               "type": "text"
-           }},
-           {{
-               "query": "Representation of Similarity Search",
+               "query": "A query related to X that needs an image",
                "type": "image"
            }},
+           ...
        ]
    }}
 
 Visual Search Tip:
 - Use terms like "diagram", "labeled diagram", "anatomical illustration", "equation", "formula", "mathematical representation", "process diagram", "step-by-step illustration", "visual explanation", "labeled parts", "component diagram", "structural breakdown"
+"""
 
+queries_human_template = """
 Topic: {query}
 {num_queries} Generated Queries:"""
