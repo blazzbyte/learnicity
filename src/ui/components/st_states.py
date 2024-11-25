@@ -39,8 +39,8 @@ def init_session_states():
     
     # Initialize language preference
     if 'current_language' not in st.session_state:
-        # Default to Spanish for now, later can add browser language detection
-        st.session_state['current_language'] = 'es'
+        # Default to English for now, later can add browser language detection
+        st.session_state['current_language'] = 'en'
     
     # Initialize other states if needed
     if 'use_custom_key' not in st.session_state:
