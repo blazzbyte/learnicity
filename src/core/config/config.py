@@ -5,6 +5,14 @@ import streamlit as st
 from typing import Optional
 from dotenv import load_dotenv
 
+def get_translation(text)->str:
+    if st.session_state.get("current_language") == "es":
+        # Return the key if no translation is available
+        return text
+    else:
+        # English is the default; look for a translation
+        return st.session_state["translations"].get(text, text)
+
 class Config:
     """Configuration class to manage environment variables"""
     

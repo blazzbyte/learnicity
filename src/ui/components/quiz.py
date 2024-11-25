@@ -2,6 +2,7 @@
 
 import streamlit as st
 from typing import List, Dict, Any
+from src.core.config import get_translation
 
 def init_quiz_states():
     """Initialize quiz-related session states"""
@@ -29,15 +30,15 @@ def render_quiz(quiz_data: List[Dict[str, Any]]):
             # Create placeholders for each question
             for i, question in enumerate(quiz_data):
                 with st.container():
-                    st.markdown(f"**Question {i+1}**")
+                    st.markdown(get_translation("**Question {number}**").format(number=i+1))
                     st.markdown(question['question'])
                     
                     # Display image if available
                     if 'image_url' in question:
                         try:
-                            st.image(question['image_url'], caption="Reference Image", width=500)
+                            st.image(question['image_url'], caption=get_translation("Reference Image"), width=500)
                         except Exception as e:
-                            st.warning("Could not load the reference image.")
+                            st.warning(get_translation("Could not load the reference image."))
                     
                     # Radio buttons for options
                     answer_key = f"Q{i+1}"
@@ -45,7 +46,7 @@ def render_quiz(quiz_data: List[Dict[str, Any]]):
                         st.session_state[answer_key] = None
                     
                     selected = st.radio(
-                        "Select your answer:",
+                        get_translation("Select your answer:"),
                         options=question['options'],
                         key=answer_key,
                         index=None
@@ -55,7 +56,7 @@ def render_quiz(quiz_data: List[Dict[str, Any]]):
             # Submit button
             col1, col2, col3 = st.columns([1,2,1])
             with col2:
-                if st.button("Submit Answers ✨", use_container_width=True):
+                if st.button(get_translation("Submit Answers ✨"), use_container_width=True):
                     score = 0
                     results = []
                     all_answered = True
@@ -74,7 +75,7 @@ def render_quiz(quiz_data: List[Dict[str, Any]]):
                             results.append(is_correct)
                     
                     if not all_answered:
-                        st.error("Please answer all questions before submitting.")
+                        st.error(get_translation("Please answer all questions before submitting."))
                         return
                     
                     st.session_state.quiz_score = score
@@ -97,7 +98,7 @@ def render_quiz(quiz_data: List[Dict[str, Any]]):
                     <div style='text-align: center; padding: 1rem; border-radius: 0.5rem; 
                     background-color: rgba(255, 140, 0, 0.1); margin: 1rem 0;'>
                         <h2 style='color: rgb(255, 140, 0); margin: 0;'>
-                            Final Score
+                            {get_translation('Final Score')}
                         </h2>
                         <div style='font-size: 2.5rem; font-weight: bold; color: rgb(255, 140, 0);'>
                             {st.session_state.quiz_score} / {len(quiz_data)}
@@ -117,19 +118,19 @@ def render_quiz(quiz_data: List[Dict[str, Any]]):
             # Show detailed feedback
             for i, (question, is_correct) in enumerate(zip(quiz_data, st.session_state.quiz_results)):
                 with st.container():
-                    st.markdown(f"**Question {i+1}**")
+                    st.markdown(get_translation("**Question {number}**").format(number=i+1))
                     st.markdown(question['question'])
                     
                     answer_key = f"Q{i+1}"
                     if answer_key in st.session_state:
                         user_answer = st.session_state[answer_key]
                         if is_correct:
-                            st.success(f"✅ Your answer: {user_answer}")
+                            st.success(get_translation("✅ Your answer: {user_answer}").format(user_answer=user_answer))
                         else:
-                            st.error(f"❌ Your answer: {user_answer}")
-                            st.success(f"Correct answer: {question['options'][question['correct_answer']]}")
-                    
-                    with st.expander("View explanation"):
+                            st.error(get_translation("❌ Your answer: {user_answer}").format(user_answer=user_answer))
+                            st.success(get_translation("Correct answer: {correct_answer}").format(correct_answer=question['options'][question['correct_answer']]))
+
+                    with st.expander(get_translation("View explanation")):
                         st.markdown(question['explanation'])
                     
                     st.markdown("---")
@@ -137,7 +138,7 @@ def render_quiz(quiz_data: List[Dict[str, Any]]):
             # Restart button
             col1, col2, col3 = st.columns([1,2,1])
             with col2:
-                if st.button("Return to Flashcards 📖", use_container_width=True):
+                if st.button(get_translation("Return to Flashcards 📖"), use_container_width=True):
                     # Clean up session state
                     for key in list(st.session_state.keys()):
                         if key.startswith("Q"):

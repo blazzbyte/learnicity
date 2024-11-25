@@ -2,7 +2,7 @@ import streamlit as st
 from streamlit.runtime.uploaded_file_manager import UploadedFile
 import pdfplumber
 import docx2txt
-from src.core.config import logger
+from src.core.config import logger, get_translation
 
 def process_file_content(file: UploadedFile) -> dict:
     """Process uploaded file content based on file type"""
@@ -41,18 +41,18 @@ def search():
     st.markdown('<style>.stColumn .stButton{text-align: end;}</style>', unsafe_allow_html=True)
     
     with col1:
-        input_text = st.text_input("Search for topic you want to learn:", key="query_input")
+        input_text = st.text_input(get_translation("Search for topic you want to learn:"), key="query_input")
     with col2:
-        if st.button("Search", key="search_button", use_container_width=True):
+        if st.button(get_translation("Search"), key="search_button", use_container_width=True):
             st.session_state["input_text"] = input_text
             st.rerun()
 
     uploaded_file = st.file_uploader(
-        "Or upload your own file:", 
+        get_translation("Or upload your own file:"),
         accept_multiple_files=False, 
         type=["pdf", "docx", "txt", "md"], 
         key="file_uploader", 
-        help="Load your own file to convert them into Flashcards. Supported formats: PDF, DOCX, TXT, MD"
+        help=get_translation("Load your own file to convert them into Flashcards. Supported formats: PDF, DOCX, TXT, MD")
     )
 
     if uploaded_file:

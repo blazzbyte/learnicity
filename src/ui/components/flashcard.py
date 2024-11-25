@@ -1,5 +1,6 @@
 import streamlit as st
 from typing import List, Dict, Any
+from src.core.config import get_translation
 
 def render_card_content(text: str, image_url: str = None, card_type: str = "text"):
     """Render the content of a flashcard side
@@ -33,7 +34,7 @@ def render_flashcards(flashcards: List[Dict[str, Any]]):
             - type (str): Type of flashcard ("text" or "image")
     """
     if not flashcards:
-        st.warning("Could not generate cards to display.")
+        st.warning(get_translation("Could not generate cards to display."))
         return
     
     if 'current_card' not in st.session_state:
@@ -56,7 +57,7 @@ def render_flashcards(flashcards: List[Dict[str, Any]]):
                         card_type
                     )}
                     <div class="flashcard-source">
-                        <a href="{card['source']}" target="_blank">Fuente</a>
+                        <a href="{card['source']}" target="_blank">{get_translation('Source')}</a>
                     </div>
                 </div>
                 <div class="flashcard-back">
@@ -67,25 +68,24 @@ def render_flashcards(flashcards: List[Dict[str, Any]]):
     ''', unsafe_allow_html=True)
     
     # Show progress and source
-    st.markdown(f'<p style="text-align: center">Tarjeta {st.session_state.current_card + 1} de {len(flashcards)}</p>', unsafe_allow_html=True)
-    
+    st.markdown('<p style="text-align: center">' + get_translation('Tarjeta {current_card} de {all_cards}').format(current_card=st.session_state.current_card + 1, all_cards=len(flashcards)), unsafe_allow_html=True)
     # Navigation buttons below the card
     st.markdown('<div class="navigation-buttons">', unsafe_allow_html=True)
     col1, col2, col3 = st.columns([1, 1, 1])
     
     with col1:
-        if st.button('← Previous', use_container_width=True):
+        if st.button(get_translation('← Previous'), use_container_width=True):
             st.session_state.current_card = (st.session_state.current_card - 1) % len(flashcards)
             st.session_state.is_flipped = False
             st.rerun()
     
     with col2:
-        if st.button('Flip card', use_container_width=True):
+        if st.button(get_translation('Flip card'), use_container_width=True):
             st.session_state.is_flipped = not st.session_state.is_flipped
             st.rerun()
     
     with col3:
-        if st.button('Next →', use_container_width=True):
+        if st.button(get_translation('Next →'), use_container_width=True):
             st.session_state.current_card = (st.session_state.current_card + 1) % len(flashcards)
             st.session_state.is_flipped = False
             st.rerun()
