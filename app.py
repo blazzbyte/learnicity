@@ -1,5 +1,7 @@
+import os
 import streamlit as st
 from src.core.config import logger, get_translation
+from src.core.config.config import get_openai_api_key
 
 from src.llm.chains.search import SearchChain
 from src.llm.chains.flashcard import FlashcardChain
@@ -15,6 +17,11 @@ from src.ui.components.search import search
 from src.ui.components.flashcard import render_flashcards
 from src.ui.components.quiz import render_quiz
 
+def check_api_key():
+    """Check if a valid API key is available"""
+    api_key = get_openai_api_key()
+    return api_key is not None
+
 def main():    
     # Initialize Streamlit components
     st_init()
@@ -23,6 +30,11 @@ def main():
     # Setup sidebar and header
     sidebar()
     header()
+
+    # Check for API Key
+    if not check_api_key():
+        st.error(get_translation("Please configure your OpenAI API key in the sidebar to use the application."))
+        return
 
     # Main content
     if "input_text" not in st.session_state and "file_content" not in st.session_state:
@@ -96,7 +108,7 @@ def main():
                 st.markdown("<style>h3{text-align: center;}</style>", unsafe_allow_html=True)
                 col1, col2, col3 = st.columns([1,2,1])
                 with col2:
-                    if st.button(get_translation("Start Quiz 🎯"), use_container_width=True):
+                    if st.button(get_translation("Start Quiz "), use_container_width=True):
                         st.session_state.start_quiz = True
                         st.rerun()
 
