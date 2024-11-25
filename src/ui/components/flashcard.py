@@ -1,8 +1,8 @@
 import streamlit as st
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from src.core.config import get_translation
 
-def render_card_content(text: str, image_url: str = None, card_type: str = "text"):
+def render_card_content(text: str, image_url: str = None, card_type: str = "text") -> str:
     """Render the content of a flashcard side
     
     Args:
@@ -10,18 +10,31 @@ def render_card_content(text: str, image_url: str = None, card_type: str = "text
         image_url (str, optional): URL of an image
         card_type (str): Type of card ("text" or "image")
     """
-    content = '<div class="content">'
+    content = []
     
     # For image cards, show image only on question side
     if card_type == "image" and image_url:
-        content += f'<img src="{image_url}" alt="{text}" style="max-width: 100%; height: auto;">'
+        content.append(f'<img src="{image_url}" alt="{text}" style="max-width: 100%; height: auto;">')
     
     # Always show the text
     if text:
-        content += f'<div style="margin-top: 10px;">{text}</div>'
+        content.append(f'<div style="margin-top: 10px;">{text}</div>')
+    
+    # Join all content and wrap in content div
+    return f'<div class="content">{"".join(content)}</div>'
+
+def render_source(source: Optional[str]) -> str:
+    """Render the source link if it's a valid HTTPS URL
+    
+    Args:
+        source (Optional[str]): The source URL
         
-    content += '</div>'
-    return content
+    Returns:
+        str: HTML for the source link or empty string if invalid
+    """
+    if source and source.startswith('https://'):
+        return f'<div class="flashcard-source"><a href="{source}" target="_blank">{get_translation("Reference")}</a></div>'
+    return ""
 
 def render_flashcards(flashcards: List[Dict[str, Any]]):
     """Render flashcards with navigation controls
@@ -45,10 +58,10 @@ def render_flashcards(flashcards: List[Dict[str, Any]]):
     
     card = flashcards[st.session_state.current_card]
     card_type = card.get('type', 'text')
-    
+
     # Render the flashcard
     st.markdown(f'''
-        <div class="flashcard-container" onclick="this.querySelector('.flashcard').classList.toggle('flipped')">
+        <div class="flashcard-container">
             <div class="flashcard {'flipped' if st.session_state.is_flipped else ''}">
                 <div class="flashcard-front">
                     {render_card_content(
@@ -56,9 +69,7 @@ def render_flashcards(flashcards: List[Dict[str, Any]]):
                         card['source'] if card_type == 'image' else None,
                         card_type
                     )}
-                    <div class="flashcard-source">
-                        <a href="{card['source']}" target="_blank">{get_translation('Source')}</a>
-                    </div>
+                    {render_source(card.get('source'))}
                 </div>
                 <div class="flashcard-back">
                     {render_card_content(card['answer'])}
@@ -67,9 +78,13 @@ def render_flashcards(flashcards: List[Dict[str, Any]]):
         </div>
     ''', unsafe_allow_html=True)
     
-    # Show progress and source
-    st.markdown('<p style="text-align: center">' + get_translation('Tarjeta {current_card} de {all_cards}').format(current_card=st.session_state.current_card + 1, all_cards=len(flashcards)), unsafe_allow_html=True)
-    # Navigation buttons below the card
+    # Show progress
+    st.markdown(
+        f'<p style="text-align: center">{get_translation("Tarjeta {current_card} de {all_cards}").format(current_card=st.session_state.current_card + 1, all_cards=len(flashcards))}</p>', 
+        unsafe_allow_html=True
+    )
+    
+    # Navigation buttons
     st.markdown('<div class="navigation-buttons">', unsafe_allow_html=True)
     col1, col2, col3 = st.columns([1, 1, 1])
     

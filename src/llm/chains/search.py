@@ -9,7 +9,8 @@ from langchain_community.document_loaders import WebBaseLoader
 from src.core.config import config, logger
 from src.llm.providers.llama import get_openai_chat_model
 from src.llm.prompts.search_prompts import queries_system_template, queries_human_template
-from src.llm.parsers.json_parser import get_json_from_text
+from src.llm.parsers.queries_parser import parse_queries
+import streamlit as st
 
 class SearchChain:
     def __init__(self):
@@ -24,12 +25,17 @@ class SearchChain:
     
     def setup_search(self):
         """Initialize search wrapper with default parameters"""
+        # Get language from session state, default to English
+        search_language = "en"
+        if st.session_state.get("current_language"):
+            search_language = st.session_state["current_language"]
+            
         self.search = SerpAPIWrapper(
             params={
                 "engine": "google",
                 "google_domain": "google.com",
                 "num": 2,
-                "hl": "en"
+                "hl": search_language
             }
         )
         
@@ -37,7 +43,7 @@ class SearchChain:
             params={
                 "engine": "google_images",
                 "google_domain": "google.com",
-                "hl": "en",
+                "hl": search_language,
                 "safe": "active"
             }
         )
@@ -56,7 +62,7 @@ class SearchChain:
         while current_try < max_retries:
             try:
                 result = chain.invoke({"query": query, "num_queries": num_queries})
-                data = get_json_from_text(result)
+                data = parse_queries(result)
                 queries = data.get("queries", [])
                 if queries:
                     logger.parser(f"Successfully generated {len(queries)} queries on attempt {current_try + 1}")

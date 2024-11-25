@@ -5,7 +5,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-def get_json_from_text(text: str) -> Optional[Dict[str, Any]]:
+def parse_queries(text: str) -> Optional[Dict[str, Any]]:
     """
     Extract and parse JSON from text that may contain explanatory content before and after.
     Designed to handle cases where JSON is embedded within explanatory text.

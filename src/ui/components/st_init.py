@@ -1,18 +1,18 @@
 import streamlit as st
 import os
-from src.data.db import init_db
+# from src.data.db import init_db
 from src.core.config import logger
 
-def init_database():
-    """Initialize database if not already initialized"""
-    if 'db_initialized' not in st.session_state:
-        try:
-            init_db()
-            st.session_state['db_initialized'] = True
-            logger.info("Database initialized successfully")
-        except Exception as e:
-            logger.error(f"Failed to initialize database: {str(e)}")
-            st.error("Failed to initialize database. Please check the logs.")
+# def init_database():
+#     """Initialize database if not already initialized"""
+#     if 'db_initialized' not in st.session_state:
+#         try:
+#             init_db()
+#             st.session_state['db_initialized'] = True
+#             logger.info("Database initialized successfully")
+#         except Exception as e:
+#             logger.error(f"Failed to initialize database: {str(e)}")
+#             st.error("Failed to initialize database. Please check the logs.")
 
 def load_css():
     """Load custom CSS styles"""
@@ -31,7 +31,7 @@ def st_init():
     )
 
     # Initialize database
-    init_database()
+    # init_database()
 
     # Load CSS styles
     load_css()

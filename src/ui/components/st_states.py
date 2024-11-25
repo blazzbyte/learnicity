@@ -3,7 +3,7 @@ import json
 import os
 
 from src.core.config import logger
-from src.data.services.user_service import UserService
+# from src.data.services.user_service import UserService
 
 def load_translations():
     """Load translations from JSON file with error handling"""
@@ -25,10 +25,10 @@ def load_translations():
 def init_session_states():
     """Initialize all session state variables"""
     # Initialize user ID if not present
-    if 'user_id' not in st.session_state:
-        user_service = UserService()
-        user = user_service.create_user()
-        st.session_state['user_id'] = user.id
+    # if 'user_id' not in st.session_state:
+    #     user_service = UserService()
+    #     user = user_service.create_user()
+    #     st.session_state['user_id'] = user.id
     
     # Load translations
     if 'translations' not in st.session_state:
