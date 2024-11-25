@@ -1,5 +1,4 @@
 from typing import Optional
-import streamlit as st
 
 from src.data.models.user import User
 from src.data.db import get_db

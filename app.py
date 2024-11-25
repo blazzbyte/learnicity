@@ -74,7 +74,7 @@ def main():
                     st.session_state.generated_quiz = quiz
                     st.rerun()
                 else:
-                    st.error("No hay flashcards disponibles para generar el quiz.")
+                    st.error("No flashcards available to generate the quiz.")
                     st.session_state.start_quiz = False
                     st.rerun()
             
@@ -82,7 +82,7 @@ def main():
             if "generated_quiz" in st.session_state and st.session_state.generated_quiz:
                 render_quiz(st.session_state.generated_quiz)
             else:
-                st.error("No se pudo generar el quiz. Por favor, intenta de nuevo.")
+                st.error("Unable to generate the quiz. Please try again.")
                 st.session_state.start_quiz = False
                 st.rerun()
         else:
@@ -92,11 +92,11 @@ def main():
             # Quiz Initial Options
             if st.session_state.generated_flashcards:
                 st.markdown("---")
-                st.markdown("### ¿Listo para poner a prueba tu conocimiento?")
+                st.markdown("### Ready to test your knowledge?")
                 st.markdown("<style>h3{text-align: center;}</style>", unsafe_allow_html=True)
                 col1, col2, col3 = st.columns([1,2,1])
                 with col2:
-                    if st.button("Comenzar Quiz 🎯", use_container_width=True):
+                    if st.button("Start Quiz 🎯", use_container_width=True):
                         st.session_state.start_quiz = True
                         st.rerun()
 

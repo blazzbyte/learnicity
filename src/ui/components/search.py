@@ -43,7 +43,7 @@ def search():
     with col1:
         input_text = st.text_input("Search for topic you want to learn:", key="query_input")
     with col2:
-        if st.button("Buscar", key="search_button", use_container_width=True):
+        if st.button("Search", key="search_button", use_container_width=True):
             st.session_state["input_text"] = input_text
             st.rerun()
 

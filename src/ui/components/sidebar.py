@@ -6,7 +6,7 @@ def sidebar():
         st.header("Settings")
 
         # Display the base URL for API calls
-        base_url = st.text_input("Base_Url", value="https://fast-api.snova.ai/v1", disabled=True, help="Base URL for API calls.")
+        base_url = st.text_input("Base_Url", value="https://fast-api.snova.ai/v1", disabled=True, help="Base URL for API calls. Cannot be changed 🔒.'cause of the hakathon rules.'")
         st.session_state["base_url"] = base_url or st.secrets.get("OPENAI_BASE_URL")
 
         # Initialize session variables if not already set

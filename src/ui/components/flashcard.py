@@ -33,7 +33,7 @@ def render_flashcards(flashcards: List[Dict[str, Any]]):
             - type (str): Type of flashcard ("text" or "image")
     """
     if not flashcards:
-        st.warning("No se pudo generar tarjetas para mostrar.")
+        st.warning("Could not generate cards to display.")
         return
     
     if 'current_card' not in st.session_state:
@@ -74,18 +74,18 @@ def render_flashcards(flashcards: List[Dict[str, Any]]):
     col1, col2, col3 = st.columns([1, 1, 1])
     
     with col1:
-        if st.button('← Anterior', use_container_width=True):
+        if st.button('← Previous', use_container_width=True):
             st.session_state.current_card = (st.session_state.current_card - 1) % len(flashcards)
             st.session_state.is_flipped = False
             st.rerun()
     
     with col2:
-        if st.button('Voltear', use_container_width=True):
+        if st.button('Flip card', use_container_width=True):
             st.session_state.is_flipped = not st.session_state.is_flipped
             st.rerun()
     
     with col3:
-        if st.button('Siguiente →', use_container_width=True):
+        if st.button('Next →', use_container_width=True):
             st.session_state.current_card = (st.session_state.current_card + 1) % len(flashcards)
             st.session_state.is_flipped = False
             st.rerun()
