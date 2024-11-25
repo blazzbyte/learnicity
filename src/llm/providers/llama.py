@@ -20,6 +20,7 @@ def get_openai_chat_model(model_name: str, max_tokens : int = 1024) -> ChatOpenA
     """
     
     # Get credentials from config
+    config.reload()
     api_key, base_url = config.get_openai_credentials()
 
     if not api_key:

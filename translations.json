@@ -1,8 +1,9 @@
 {
+  "Please configure your OpenAI API key in the sidebar to use the application.": "Por favor, configura tu clave API OpenAI en la barra lateral para usar la aplicación.",
   "Learn Faster with Learnicity:books:": "Aprende más rápido con Learnicity:books:",
   "Turn any topic into flashcards, quizzes, and personalized resources to master it effortlessly.": "Convierte cualquier tema en flashcards, quizzes y recursos personalizados para dominarlo sin esfuerzo.",
   "Enter your own API key to override the default.": "Ingresa tu propia clave API para anular la predeterminada.",
-  "Save &/or Use Default Key": "Guardar y/o Usar Clave Predeterminada",
+  "Save 💾": "Guardar 💾",
   "Save your custom API key and/or switch back to using the default key.": "Guarda tu clave API personalizada y/o vuelve a usar la clave predeterminada.",
   "Custom API key saved!": "¡Clave API personalizada guardada!",
   "You must enter a valid API key.": "Debes ingresar una clave API válida.",

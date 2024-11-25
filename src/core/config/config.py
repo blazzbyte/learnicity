@@ -6,12 +6,53 @@ from typing import Optional
 from dotenv import load_dotenv
 
 def get_translation(text)->str:
-    if st.session_state.get("current_language") == "es":
+    if st.session_state.get("current_language") == "en":
         # Return the key if no translation is available
         return text
     else:
         # English is the default; look for a translation
         return st.session_state["translations"].get(text, text)
+
+def get_api_key(key_name: str) -> Optional[str]:
+    """
+    Get API key with the following priority:
+    1. API key from Streamlit secrets
+    2. API key from environment variables
+    """
+    try:
+        # Try to get from Streamlit secrets first
+        api_key = st.secrets.get(key_name)
+        if api_key and api_key.strip():
+            return api_key.strip()
+    except Exception:
+        pass
+    
+    # Then try environment variable
+    api_key = os.environ.get(key_name, "").strip()
+    return api_key if api_key else None
+
+def get_openai_api_key() -> Optional[str]:
+    """
+    Get OpenAI API key with the following priority:
+    1. Custom API key from session state
+    2. API key from Streamlit secrets
+    3. API key from environment variables
+    """
+    # Check for custom key first
+    if st.session_state.get('use_custom_key'):
+        return st.session_state.get('api_key')
+    
+    # Try to get from Streamlit secrets
+    try:
+        api_key = st.secrets.get("OPENAI_API_KEY")
+        if api_key and api_key.strip():
+            return api_key.strip()
+    except Exception:
+        pass
+    
+    # Finally, try environment variable
+    api_key = os.environ.get("OPENAI_API_KEY", "").strip()
+    return api_key if api_key else None
 
 class Config:
     """Configuration class to manage environment variables"""
@@ -27,13 +68,13 @@ class Config:
         # STORAGE
         self.logs_dir = os.getenv('LOGS_DIR', 'src/data/logs')
         
-        # API KEYS
-        self.serpapi_api_key = os.getenv('SERPAPI_API_KEY')
-        self.openai_api_key = st.session_state.get("api_key", os.getenv('OPENAI_API_KEY'))
+        # API KEYS - Using priority system for all keys
+        self.serpapi_api_key = get_api_key('SERPAPI_API_KEY')
+        self.openai_api_key = get_openai_api_key()
         
         # API ENDPOINTS
-        self.openai_base_url = st.session_state.get("base_url", os.getenv('OPENAI_BASE_URL'))
-
+        self.openai_base_url = st.secrets.get("OPENAI_BASE_URL", os.getenv('OPENAI_BASE_URL'))
+        
         # TIMEOUT
         self.inference_timeout = int(os.getenv('INFERENCE', '30'))
     
@@ -49,10 +90,6 @@ class Config:
         """Get the logs directory path"""
         return self.logs_dir
     
-    def get_google_credentials(self) -> tuple[Optional[str]]:
-        """Get Google Search API credentials"""
-        return (self.google_search_engine_id,)
-    
     def get_serpapi_credentials(self) -> Optional[str]:
         """Get SerpAPI API key"""
         return self.serpapi_api_key
@@ -60,18 +97,6 @@ class Config:
     def get_openai_credentials(self) -> tuple[Optional[str], Optional[str]]:
         """Get OpenAI API credentials and base URL"""
         return self.openai_api_key, self.openai_base_url
-    
-    def get_tavily_credentials(self) -> Optional[str]:
-        """Get Tavily API key"""
-        return self.tavily_api_key
-    
-    def get_jina_credentials(self) -> Optional[str]:
-        """Get Jina API key"""
-        return self.jina_api_key
-    
-    def get_google_endpoint(self) -> Optional[str]:
-        """Get Google Search API endpoint"""
-        return self.google_search_api_endpoint
 
 # Create a singleton instance
 config = Config()
